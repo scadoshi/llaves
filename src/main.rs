@@ -1,4 +1,3 @@
-use rand::seq::SliceRandom;
 use serde_json::Value;
 use std::{
     cell::UnsafeCell,
@@ -8,8 +7,7 @@ use std::{
         Arc,
         atomic::{AtomicBool, Ordering},
     },
-    thread::{JoinHandle, sleep, spawn},
-    time::Duration,
+    thread::{JoinHandle, spawn},
 };
 
 #[derive(Debug, Clone)]
@@ -41,7 +39,6 @@ fn main() {
     let ready_clone = ready.clone();
     let config_clone = config.clone();
     handles.push(spawn(move || {
-        sleep(Duration::from_millis(1000));
         let mut buf = Vec::<u8>::new();
         File::open(CONFIG_PATH)
             .unwrap()
@@ -52,17 +49,13 @@ fn main() {
         ready_clone.store(true, Ordering::Release);
     }));
 
-    // access config
-    let mut fxs = vec![100, 200, 300, 400, 500];
-    fxs.shuffle(&mut rand::rng());
-    for (i, fx) in fxs.into_iter().enumerate() {
+    for i in 0..5 {
         let ready_clone = ready.clone();
         let config_clone = config.clone();
         handles.push(spawn(move || {
             loop {
-                sleep(Duration::from_millis(fx));
                 if ready_clone.load(Ordering::Acquire) {
-                    println!("id:{} | fx:{} | cfg: {:?}", i, fx, config_clone.read());
+                    println!("id:{} | cfg: {:?}", i, config_clone.read());
                     break;
                 }
             }
